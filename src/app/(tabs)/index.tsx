@@ -21,7 +21,7 @@ import { useNotifications } from '@/stores/notifications';
 import { useT } from '@/services/i18n';
 
 export default function Home() {
-  const { profile, interests } = useUser();
+  const { profile, interests, addresses, defaultAddressId } = useUser();
   const bookings = useBookings((s) => s.bookings);
   const unreadNotifs = useNotifications((s) => s.items.filter((n) => !n.read).length);
   const { t } = useT();
@@ -30,6 +30,13 @@ export default function Home() {
   useEffect(() => {
     fetchProviders().then(setProviders);
   }, []);
+
+  const currentAddress = (() => {
+    const a = addresses.find((x) => x.id === defaultAddressId) ?? addresses[0];
+    return a ? `${a.line.split(',').pop()?.trim() ?? a.line}, ${a.city}` : 'Casablanca';
+  })();
+
+  const activeBooking = bookings.find((b) => b.status === 'enroute' || b.status === 'inprogress');
 
   const near = providers ? [...providers].sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 6) : [];
   const topRated = providers ? [...providers].sort((a, b) => b.rating - a.rating).slice(0, 6) : [];
@@ -50,10 +57,10 @@ export default function Home() {
         <FadeInUp>
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={type.small}>
-                {t('hello')} 👋
+              <Text style={type.h1}>
+                {t('hello')} {profile.firstName} 👋
               </Text>
-              <Text style={[type.h1, { marginTop: 2 }]}>{profile.firstName}</Text>
+              <Text style={[type.small, { marginTop: 3 }]}>Que peut faire LYVO pour vous aujourd’hui ?</Text>
             </View>
             <Pressable onPress={() => router.push('/notifications')} style={styles.bell}>
               <Ionicons name="notifications-outline" size={21} color={colors.text} />
@@ -63,11 +70,37 @@ export default function Home() {
               <Avatar uri={profile.avatar} name={`${profile.firstName} ${profile.lastName}`} size={44} ring />
             </Pressable>
           </View>
+          <Pressable onPress={() => router.push('/addresses')} style={styles.locRow}>
+            <Ionicons name="location" size={13} color={colors.violetLight} />
+            <Text style={styles.locText}>{currentAddress}</Text>
+            <Ionicons name="chevron-down" size={12} color={colors.textFaint} />
+          </Pressable>
         </FadeInUp>
 
         <FadeInUp delay={90}>
-          <SearchBar placeholder={t('search_placeholder')} onPress={() => router.push('/(tabs)/explore')} style={{ marginTop: spacing.lg }} />
+          <SearchBar placeholder="De quoi avez-vous besoin ?" onPress={() => router.push('/(tabs)/explore')} style={{ marginTop: spacing.lg }} />
         </FadeInUp>
+
+        {/* Réservation en cours */}
+        {activeBooking && (
+          <FadeInUp delay={140}>
+            <Pressable onPress={() => router.push(activeBooking.trackable ? `/tracking/${activeBooking.id}` : '/(tabs)/bookings')} style={styles.liveCard}>
+              <View style={styles.livePulse} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.liveTitle}>
+                  {activeBooking.status === 'enroute' ? 'Votre pro arrive dans ~12 min' : 'Prestation en cours'}
+                </Text>
+                <Text style={[type.small, { marginTop: 2 }]} numberOfLines={1}>
+                  {activeBooking.serviceName} · {activeBooking.providerName}
+                </Text>
+              </View>
+              <View style={styles.liveCta}>
+                <Text style={styles.liveCtaText}>Suivre</Text>
+                <Ionicons name="chevron-forward" size={13} color={colors.gold} />
+              </View>
+            </Pressable>
+          </FadeInUp>
+        )}
       </View>
 
       {/* Catégories */}
@@ -110,7 +143,25 @@ export default function Home() {
       {recommended.length > 0 && <HomeSection title="Recommandé pour vous" data={recommended} loading={false} delay={110} />}
       <HomeSection title="Les mieux notés" data={topRated} loading={!providers} delay={220} />
       {rebook.length > 0 && <HomeSection title="Réserver à nouveau" data={rebook} loading={false} delay={330} />}
-      <HomeSection title="Expériences premium" data={premium} loading={!providers} wide delay={440} />
+
+      {/* Bannière LYVO+ */}
+      <View style={styles.pad}>
+        <FadeInUp delay={380}>
+          <Pressable onPress={() => router.push('/plus')}>
+            <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.plusBanner}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.plusTitle}>LYVO+</Text>
+                <Text style={styles.plusSub}>Frais réduits, réservation prioritaire, cashback ×2 — 99 MAD/mois</Text>
+              </View>
+              <View style={styles.plusCta}>
+                <Text style={styles.plusCtaText}>Découvrir</Text>
+              </View>
+            </LinearGradient>
+          </Pressable>
+        </FadeInUp>
+      </View>
+
+      <HomeSection title="LYVO Select" data={premium} loading={!providers} wide delay={440} />
       {fresh.length > 0 && <HomeSection title="Nouveautés" data={fresh} loading={false} delay={550} />}
 
       <View style={{ height: spacing.xl }} />
@@ -204,4 +255,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  locRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: spacing.md, alignSelf: 'flex-start' },
+  locText: { color: colors.textSoft, fontSize: 13, fontWeight: '600' },
+  liveCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: 'rgba(240,197,104,0.4)',
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginTop: spacing.lg,
+  },
+  livePulse: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.gold },
+  liveTitle: { color: colors.gold, fontSize: 14, fontWeight: '800' },
+  liveCta: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  liveCtaText: { color: colors.gold, fontSize: 13, fontWeight: '800' },
+  plusBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderRadius: radius.lg,
+    padding: spacing.xl,
+    marginTop: spacing.xl,
+  },
+  plusTitle: { color: '#fff', fontSize: 19, fontWeight: '900', letterSpacing: 1 },
+  plusSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, marginTop: 4, lineHeight: 17 },
+  plusCta: { backgroundColor: 'rgba(6,2,13,0.35)', borderRadius: radius.full, paddingHorizontal: spacing.lg, paddingVertical: 9 },
+  plusCtaText: { color: '#fff', fontSize: 13, fontWeight: '800' },
 });

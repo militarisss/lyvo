@@ -32,6 +32,12 @@ export interface Category {
   subs: SubCategory[];
 }
 
+export interface ServiceExtra {
+  id: string;
+  name: string;
+  priceMad: number;
+}
+
 export interface Service {
   id: string;
   name: string;
@@ -39,6 +45,15 @@ export interface Service {
   priceMad: number;
   durationMin: number;
   atHome: boolean;
+  extras?: ServiceExtra[];
+}
+
+export interface StaffMember {
+  name: string;
+  avatar: string;
+  rating: number;
+  missions: number;
+  etaMin: number;
 }
 
 export interface Review {
@@ -80,6 +95,12 @@ export interface Provider {
   mobile: boolean; // se déplace chez le client
   openNow: boolean;
   isNew?: boolean;
+  badges?: ('toppro' | 'select' | 'highly')[];
+  languages?: string[];
+  experienceYears?: number;
+  missionsCount?: number;
+  recommendPct?: number;
+  staff?: StaffMember[];
 }
 
 export type BookingStatus = 'pending' | 'confirmed' | 'enroute' | 'inprogress' | 'done' | 'cancelled';
@@ -104,6 +125,8 @@ export interface Booking {
   promoCode?: string;
   rated?: boolean;
   trackable: boolean;
+  extrasLabels?: string[];
+  staffName?: string;
 }
 
 export interface Message {

@@ -10,6 +10,7 @@ import { Sheet } from '@/components/Sheet';
 import { Button } from '@/components/Button';
 import { useUser } from '@/stores/user';
 import { useWallet } from '@/stores/wallet';
+import { clearDemoData } from '@/stores/persist';
 import { useToast } from '@/stores/toast';
 import { LANGS, useLangStore } from '@/services/i18n';
 import { mad } from '@/utils/format';
@@ -45,9 +46,18 @@ export default function Profile() {
     {
       title: 'Avantages',
       items: [
+        { icon: 'diamond-outline', label: 'LYVO+', sub: '99 MAD/mois', route: '/plus' },
         { icon: 'wallet-outline', label: 'Wallet LYVO', sub: mad(balance), route: '/wallet' },
-        { icon: 'gift-outline', label: 'Invitez vos amis', sub: '+40 MAD offerts', route: '/referral' },
+        { icon: 'gift-outline', label: 'Invitez vos amis', sub: '+50 MAD offerts', route: '/referral' },
         { icon: 'notifications-outline', label: 'Notifications', route: '/notifications' },
+      ],
+    },
+    {
+      title: 'Espaces démo',
+      items: [
+        { icon: 'construct-outline', label: 'Espace prestataire', sub: 'LYVO Pro', route: '/pro' },
+        { icon: 'stats-chart-outline', label: 'Back-office admin', sub: 'SaaS', route: '/admin' },
+        { icon: 'globe-outline', label: 'Site vitrine LYVO', route: '/landing' },
       ],
     },
     {
@@ -153,9 +163,11 @@ export default function Profile() {
             title={confirm === 'delete' ? 'Supprimer' : 'Déconnexion'}
             variant="danger"
             onPress={() => {
+              const wasDelete = confirm === 'delete';
               setConfirm(null);
               signOut();
-              toast(confirm === 'delete' ? 'Compte supprimé' : 'À bientôt !', 'info');
+              if (wasDelete) clearDemoData();
+              toast(wasDelete ? 'Compte supprimé — données effacées' : 'À bientôt !', 'info');
               router.replace('/onboarding/language');
             }}
             style={{ flex: 1 }}

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { WalletTransaction } from '@/types/models';
 import { SEED_WALLET, SEED_WALLET_BALANCE } from '@/data/seed';
+import { demoStorage } from '@/stores/persist';
 import { uid } from '@/utils/format';
 
 interface WalletState {
@@ -11,7 +13,9 @@ interface WalletState {
   credit: (amount: number, label: string, kind: WalletTransaction['kind']) => void;
 }
 
-export const useWallet = create<WalletState>((set, get) => ({
+export const useWallet = create<WalletState>()(
+  persist(
+    (set, get) => ({
   balance: SEED_WALLET_BALANCE,
   transactions: SEED_WALLET,
   topUp: (amount) =>
@@ -27,9 +31,12 @@ export const useWallet = create<WalletState>((set, get) => ({
     }));
     return true;
   },
-  credit: (amount, label, kind) =>
-    set((s) => ({
-      balance: s.balance + amount,
-      transactions: [{ id: uid('w'), label, amountMad: amount, date: "Aujourd'hui", kind }, ...s.transactions],
-    })),
-}));
+      credit: (amount, label, kind) =>
+        set((s) => ({
+          balance: s.balance + amount,
+          transactions: [{ id: uid('w'), label, amountMad: amount, date: "Aujourd'hui", kind }, ...s.transactions],
+        })),
+    }),
+    { name: 'lyvo-wallet', storage: demoStorage }
+  )
+);

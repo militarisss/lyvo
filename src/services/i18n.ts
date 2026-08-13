@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { Lang } from '@/types/models';
+import { demoStorage } from '@/stores/persist';
 
 /**
  * i18n minimal — FR complet, EN/AR sur les parcours clés (onboarding, navigation).
@@ -62,10 +64,15 @@ interface LangState {
   setLang: (l: Lang) => void;
 }
 
-export const useLangStore = create<LangState>((set) => ({
-  lang: 'fr',
-  setLang: (lang) => set({ lang }),
-}));
+export const useLangStore = create<LangState>()(
+  persist(
+    (set) => ({
+      lang: 'fr',
+      setLang: (lang) => set({ lang }),
+    }),
+    { name: 'lyvo-lang', storage: demoStorage }
+  )
+);
 
 export function useT() {
   const lang = useLangStore((s) => s.lang);

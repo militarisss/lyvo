@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from '@/theme';
@@ -13,8 +13,11 @@ import { Glow } from '@/components/Glow';
  */
 function PhoneShell({ children }: { children: ReactNode }) {
   const { width, height } = useWindowDimensions();
+  const pathname = usePathname();
+  // La landing et le back-office sont de vraies pages web pleine largeur.
+  const fullBleed = pathname.startsWith('/landing') || pathname.startsWith('/admin');
   const desktop = Platform.OS === 'web' && width >= 560;
-  if (!desktop) return <>{children}</>;
+  if (!desktop || fullBleed) return <>{children}</>;
   return (
     <View style={shell.backdrop}>
       <Glow side="center" top={-120} />

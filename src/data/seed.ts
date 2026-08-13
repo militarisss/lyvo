@@ -130,13 +130,16 @@ export const SEED_WALLET: WalletTransaction[] = [
   { id: 'w5', label: 'Parrainage — Yassine', amountMad: 40, date: '20 juil.', kind: 'referral' },
 ];
 
-export const SEED_WALLET_BALANCE = 250;
+export const SEED_WALLET_BALANCE = 740;
 
 export const PROMO_CODES: PromoCode[] = [
   { code: 'LYVO20', label: '-20 % sur votre réservation', type: 'percent', value: 20 },
+  { code: 'WELCOME50', label: '50 MAD offerts sur votre première prestation', type: 'fixed', value: 50 },
   { code: 'BIENVENUE', label: '-50 MAD de bienvenue', type: 'fixed', value: 50 },
 ];
 
 export const SERVICE_FEE_MAD = 15;
 export const REFERRAL_CODE = 'BADR-LYVO';
-export const REFERRAL_REWARD_MAD = 40;
+export const REFERRAL_REWARD_MAD = 50;
+
+export const TRENDING_SEARCHES = ['Nettoyage canapé', 'Chauffeur aéroport', 'Climatisation', 'Barbier à domicile'];

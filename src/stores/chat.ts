@@ -1,7 +1,9 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { Conversation, Message } from '@/types/models';
 import { SEED_CONVERSATIONS } from '@/data/seed';
 import { providerById } from '@/data/providers';
+import { demoStorage } from '@/stores/persist';
 import { uid } from '@/utils/format';
 
 const AUTO_REPLIES = [
@@ -24,8 +26,10 @@ interface ChatState {
   byId: (id: string) => Conversation | undefined;
 }
 
-export const useChat = create<ChatState>((set, get) => ({
-  conversations: SEED_CONVERSATIONS,
+export const useChat = create<ChatState>()(
+  persist(
+    (set, get) => ({
+      conversations: SEED_CONVERSATIONS,
   send: (conversationId, text) => {
     const msg: Message = { id: uid('m'), from: 'me', text, at: nowHM(), read: true };
     set((s) => ({
@@ -66,5 +70,8 @@ export const useChat = create<ChatState>((set, get) => ({
     set((s) => ({ conversations: [conv, ...s.conversations] }));
     return conv.id;
   },
-  byId: (id) => get().conversations.find((c) => c.id === id),
-}));
+      byId: (id) => get().conversations.find((c) => c.id === id),
+    }),
+    { name: 'lyvo-chat', storage: demoStorage }
+  )
+);

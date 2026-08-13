@@ -1,4 +1,5 @@
 import type { Provider } from '@/types/models';
+import { EXTRA_PROVIDERS } from '@/data/providers-extra';
 
 const img = (seed: string, w = 640, h = 420) => `https://picsum.photos/seed/${seed}/${w}/${h}`;
 const face = (n: number) => `https://i.pravatar.cc/150?img=${n}`;
@@ -9,7 +10,7 @@ const HOURS_STD = [
   { days: 'Dimanche', open: '10:00', close: '14:00' },
 ];
 
-export const PROVIDERS: Provider[] = [
+const BASE_PROVIDERS: Provider[] = [
   {
     id: 'onyx-barber',
     name: 'Onyx Barber Club',
@@ -32,6 +33,15 @@ export const PROVIDERS: Provider[] = [
     hours: HOURS_STD,
     mobile: true,
     openNow: true,
+    badges: ['toppro', 'select'],
+    languages: ['Français', 'Darija', 'English'],
+    experienceYears: 8,
+    missionsCount: 4820,
+    recommendPct: 98,
+    staff: [
+      { name: 'Salim B.', avatar: face(68), rating: 4.9, missions: 2140, etaMin: 30 },
+      { name: 'Yassine K.', avatar: face(11), rating: 4.7, missions: 1180, etaMin: 45 },
+    ],
     services: [
       { id: 'svc-cut', name: 'Coupe signature', priceMad: 150, durationMin: 45, atHome: false, description: 'Coupe aux ciseaux + coiffage' },
       { id: 'svc-beard', name: 'Taille de barbe', priceMad: 80, durationMin: 30, atHome: false, description: 'Serviette chaude + huile' },
@@ -70,8 +80,20 @@ export const PROVIDERS: Provider[] = [
     hours: HOURS_STD,
     mobile: true,
     openNow: true,
+    badges: ['highly'],
+    languages: ['Français', 'Darija'],
+    experienceYears: 5,
+    missionsCount: 2960,
+    recommendPct: 94,
+    staff: [
+      { name: 'Fatima Z.', avatar: face(25), rating: 4.8, missions: 1320, etaMin: 35 },
+      { name: 'Naïma B.', avatar: face(32), rating: 4.7, missions: 940, etaMin: 50 },
+    ],
     services: [
-      { id: 'svc-2h', name: 'Ménage express — 2 h', priceMad: 180, durationMin: 120, atHome: true },
+      { id: 'svc-2h', name: 'Ménage express — 2 h', priceMad: 180, durationMin: 120, atHome: true, extras: [
+        { id: 'x-repassage', name: 'Repassage (30 min)', priceMad: 60 },
+        { id: 'x-frigo', name: 'Intérieur frigo & four', priceMad: 50 },
+      ] },
       { id: 'svc-4h', name: 'Ménage complet — 4 h', priceMad: 320, durationMin: 240, atHome: true },
       { id: 'svc-deep', name: 'Grand nettoyage', priceMad: 650, durationMin: 360, atHome: true, description: 'Cuisine, sanitaires, vitres incluses' },
     ],
@@ -103,8 +125,16 @@ export const PROVIDERS: Provider[] = [
     hours: HOURS_STD,
     mobile: true,
     openNow: true,
+    badges: ['toppro'],
+    languages: ['Français', 'Darija', 'English'],
+    experienceYears: 6,
+    missionsCount: 1870,
+    recommendPct: 96,
     services: [
-      { id: 'svc-wash', name: 'Lavage main premium', priceMad: 120, durationMin: 60, atHome: false },
+      { id: 'svc-wash', name: 'Lavage main premium', priceMad: 120, durationMin: 60, atHome: false, extras: [
+        { id: 'x-cire', name: 'Cire de protection', priceMad: 80 },
+        { id: 'x-cuir', name: 'Soin des cuirs', priceMad: 100 },
+      ] },
       { id: 'svc-interior', name: 'Rénovation intérieure', priceMad: 450, durationMin: 180, atHome: false },
       { id: 'svc-ceramic', name: 'Traitement céramique', priceMad: 2500, durationMin: 480, atHome: false },
       { id: 'svc-mobile', name: 'Lavage à domicile', priceMad: 200, durationMin: 75, atHome: true },
@@ -137,6 +167,11 @@ export const PROVIDERS: Provider[] = [
     hours: [{ days: 'Tous les jours', open: '11:00', close: '23:00' }],
     mobile: true,
     openNow: true,
+    badges: ['select', 'highly'],
+    languages: ['Français', 'Darija', 'English'],
+    experienceYears: 12,
+    missionsCount: 640,
+    recommendPct: 99,
     services: [
       { id: 'svc-menu4', name: 'Menu dégustation — 4 pers.', priceMad: 1400, durationMin: 180, atHome: true },
       { id: 'svc-menu8', name: 'Dîner privé — 8 pers.', priceMad: 2600, durationMin: 240, atHome: true },
@@ -266,6 +301,11 @@ export const PROVIDERS: Provider[] = [
     hours: [{ days: 'Tous les jours', open: '05:00', close: '23:59' }],
     mobile: true,
     openNow: true,
+    badges: ['toppro', 'select'],
+    languages: ['Français', 'Darija', 'English'],
+    experienceYears: 10,
+    missionsCount: 3320,
+    recommendPct: 98,
     services: [
       { id: 'svc-cmn', name: 'Transfert aéroport CMN', priceMad: 350, durationMin: 60, atHome: true },
       { id: 'svc-hour', name: 'Mise à disposition — 1 h', priceMad: 250, durationMin: 60, atHome: true },
@@ -403,6 +443,8 @@ export const PROVIDERS: Provider[] = [
     faq: [],
   },
 ];
+
+export const PROVIDERS: Provider[] = [...BASE_PROVIDERS, ...EXTRA_PROVIDERS];
 
 export function providerById(id: string): Provider | undefined {
   return PROVIDERS.find((p) => p.id === id);

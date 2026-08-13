@@ -12,6 +12,8 @@ import { Stars } from '@/components/Stars';
 import { Avatar } from '@/components/Avatar';
 import { MapPlaceholder } from '@/components/MapPlaceholder';
 import { EmptyState } from '@/components/EmptyState';
+import { RatingBars } from '@/components/RatingBars';
+import { ProBadges } from '@/components/ProBadges';
 import { providerById } from '@/data/providers';
 import { useFavorites } from '@/stores/favorites';
 import { useChat } from '@/stores/chat';
@@ -82,11 +84,11 @@ export default function ProviderPage() {
 
         <View style={styles.body}>
           {/* En-tête */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-            <Text style={[type.h1, { flex: 1 }]}>{p.name}</Text>
-            {p.verified && <Badge label="Vérifié" tone="violet" icon="shield-checkmark" />}
-          </View>
+          <Text style={type.h1}>{p.name}</Text>
           <Text style={[type.bodySoft, { marginTop: 4 }]}>{p.tagline}</Text>
+          <View style={{ marginTop: spacing.md }}>
+            <ProBadges provider={p} />
+          </View>
 
           <View style={styles.metaRow}>
             <Stars rating={p.rating} count={p.reviewsCount} size={15} />
@@ -116,6 +118,15 @@ export default function ProviderPage() {
             />
             <QuickAction icon="navigate-outline" label="Itinéraire" onPress={() => toast('Ouverture du GPS simulée', 'info')} />
           </View>
+
+          {/* stats de confiance */}
+          {(p.experienceYears || p.missionsCount || p.languages) && (
+            <View style={styles.statsRow}>
+              {p.experienceYears != null && <Stat value={`${p.experienceYears} ans`} label="d’expérience" />}
+              {p.missionsCount != null && <Stat value={p.missionsCount.toLocaleString('fr-FR')} label="missions" />}
+              {p.languages && <Stat value={p.languages.map((l) => l.slice(0, 2).toUpperCase()).join(' · ')} label="langues" />}
+            </View>
+          )}
 
           {/* description */}
           <Text style={[type.h2, styles.sectionTitle]}>À propos</Text>
@@ -164,6 +175,17 @@ export default function ProviderPage() {
           <Text style={[type.h2, styles.sectionTitle]}>
             Avis clients <Text style={type.small}>({p.reviewsCount})</Text>
           </Text>
+          <Card style={{ marginBottom: spacing.md }}>
+            <RatingBars rating={p.rating} count={p.reviewsCount} />
+            {p.recommendPct != null && (
+              <View style={styles.recommendRow}>
+                <Ionicons name="thumbs-up-outline" size={14} color={colors.success} />
+                <Text style={[type.small, { color: colors.success, fontWeight: '700' }]}>
+                  {p.recommendPct}% des clients recommandent {p.name.split(' ')[0]}
+                </Text>
+              </View>
+            )}
+          </Card>
           <View style={{ gap: spacing.md }}>
             {p.reviews.map((r) => (
               <Card key={r.id}>
@@ -217,6 +239,15 @@ export default function ProviderPage() {
   );
 }
 
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <View style={styles.stat}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={type.tiny}>{label}</Text>
+    </View>
+  );
+}
+
 function QuickAction({ icon, label, onPress }: { icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void }) {
   return (
     <Pressable
@@ -264,6 +295,23 @@ const styles = StyleSheet.create({
   },
   quickLabel: { color: colors.text, fontSize: 13, fontWeight: '700' },
   sectionTitle: { marginTop: spacing.xl, marginBottom: spacing.md },
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  stat: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    gap: 2,
+  },
+  statValue: { color: colors.text, fontSize: 15, fontWeight: '800' },
+  recommendRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.lg },
   serviceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   servicePrice: { color: colors.violetLight, fontWeight: '800', fontSize: 15 },
   hourRow: { flexDirection: 'row', justifyContent: 'space-between' },

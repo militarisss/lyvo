@@ -13,6 +13,7 @@ import { ProviderSkeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { MapPlaceholder } from '@/components/MapPlaceholder';
 import { CATEGORIES } from '@/data/categories';
+import { TRENDING_SEARCHES } from '@/data/seed';
 import { fetchProviders, searchSuggestions, type SearchFilters, type SortKey } from '@/services/api';
 import type { Provider } from '@/types/models';
 
@@ -89,13 +90,19 @@ export default function Explore() {
         </View>
       )}
 
-      {/* historique */}
+      {/* historique + tendances */}
       {!query && !submitted && !category && (
         <View style={[styles.pad, { marginTop: spacing.md }]}>
           <Text style={type.label}>Recherches récentes</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md }}>
             {HISTORY.slice(0, 5).map((h) => (
               <Chip key={h} label={h} icon="time-outline" onPress={() => submitSearch(h)} />
+            ))}
+          </View>
+          <Text style={[type.label, { marginTop: spacing.lg }]}>Tendances au Maroc</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md }}>
+            {TRENDING_SEARCHES.map((h) => (
+              <Chip key={h} label={h} icon="trending-up-outline" onPress={() => submitSearch(h)} />
             ))}
           </View>
         </View>

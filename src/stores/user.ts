@@ -1,6 +1,8 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { Address, UserProfile } from '@/types/models';
 import { SEED_ADDRESSES } from '@/data/seed';
+import { demoStorage } from '@/stores/persist';
 import { uid } from '@/utils/format';
 
 interface UserState {
@@ -33,7 +35,9 @@ const EMPTY_PROFILE: UserProfile = {
   avatar: 'https://i.pravatar.cc/150?img=8',
 };
 
-export const useUser = create<UserState>((set) => ({
+export const useUser = create<UserState>()(
+  persist(
+    (set) => ({
   onboarded: false,
   authenticated: false,
   profile: EMPTY_PROFILE,
@@ -58,7 +62,10 @@ export const useUser = create<UserState>((set) => ({
   setDefaultAddress: (defaultAddressId) => set({ defaultAddressId }),
   setLocationGranted: (locationGranted) => set({ locationGranted }),
   setNotificationsGranted: (notificationsGranted) => set({ notificationsGranted }),
-  completeOnboarding: () => set({ onboarded: true, authenticated: true }),
-  signIn: () => set({ authenticated: true }),
-  signOut: () => set({ authenticated: false, onboarded: false, interests: [] }),
-}));
+      completeOnboarding: () => set({ onboarded: true, authenticated: true }),
+      signIn: () => set({ authenticated: true }),
+      signOut: () => set({ authenticated: false, onboarded: false, interests: [] }),
+    }),
+    { name: 'lyvo-user', storage: demoStorage }
+  )
+);

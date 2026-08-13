@@ -10,6 +10,7 @@ import { Card } from './Card';
 import { Badge, STATUS_META } from './Badge';
 import { Button } from './Button';
 import { useChat } from '@/stores/chat';
+import { useToast } from '@/stores/toast';
 
 interface Props {
   booking: Booking;
@@ -18,6 +19,7 @@ interface Props {
 
 export function BookingCard({ booking: b, onCancel }: Props) {
   const openChat = useChat((s) => s.openWithProvider);
+  const toast = useToast((s) => s.show);
   const meta = STATUS_META[b.status];
   const active = b.status === 'confirmed' || b.status === 'enroute' || b.status === 'inprogress' || b.status === 'pending';
 
@@ -43,7 +45,7 @@ export function BookingCard({ booking: b, onCancel }: Props) {
         </View>
       </View>
 
-      {(active || (b.status === 'done' && !b.rated)) && (
+      {(active || b.status === 'done') && (
         <View style={styles.actions}>
           {b.trackable && b.status === 'enroute' && (
             <Button title="Suivre" size="sm" icon="navigate-outline" onPress={() => router.push(`/tracking/${b.id}`)} style={{ flex: 1 }} />
@@ -66,6 +68,19 @@ export function BookingCard({ booking: b, onCancel }: Props) {
           )}
           {b.status === 'done' && !b.rated && (
             <Button title="Noter la prestation" size="sm" icon="star-outline" onPress={() => router.push(`/rate/${b.id}`)} style={{ flex: 1 }} />
+          )}
+          {b.status === 'done' && (
+            <Button
+              title="Facture"
+              size="sm"
+              variant="secondary"
+              icon="download-outline"
+              onPress={() => toast(`Facture ${b.id.toUpperCase()} envoyée par email`, 'success')}
+              style={{ flex: 1 }}
+            />
+          )}
+          {b.status === 'done' && b.rated && (
+            <Button title="Réserver à nouveau" size="sm" icon="refresh-outline" onPress={() => router.push(`/booking/${b.providerId}?serviceId=${b.serviceId}`)} style={{ flex: 1 }} />
           )}
         </View>
       )}

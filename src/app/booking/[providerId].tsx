@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { colors, radius, spacing, type } from '@/theme';
 import { Screen } from '@/components/Screen';
@@ -21,7 +22,7 @@ import { mad, shortDate, uid } from '@/utils/format';
 import type { Booking } from '@/types/models';
 import { notifyError, notifySuccess, tapLight } from '@/utils/haptics';
 
-const STEPS = ['Service', 'Adresse', 'Date', 'Détails', 'Paiement'] as const;
+const STEPS = ['Service', 'Adresse', 'Date', 'Pro', 'Détails', 'Paiement'] as const;
 
 export default function BookingWizard() {
   const { providerId, serviceId } = useLocalSearchParams<{ providerId: string; serviceId?: string }>();
@@ -33,6 +34,8 @@ export default function BookingWizard() {
 
   const [step, setStep] = useState(0);
   const [svcId, setSvcId] = useState<string | null>(serviceId ?? null);
+  const [extraIds, setExtraIds] = useState<string[]>([]);
+  const [staffIdx, setStaffIdx] = useState<number>(-1); // -1 = meilleur pro automatique
   const [addressId, setAddressId] = useState<string>(defaultAddressId);
   const [date, setDate] = useState<string | null>(null);
   const [time, setTime] = useState<string | null>(null);
@@ -45,14 +48,21 @@ export default function BookingWizard() {
   const service = p?.services.find((s) => s.id === svcId) ?? null;
   const needsAddress = service?.atHome ?? true;
 
+  const selectedExtras = useMemo(
+    () => (service?.extras ?? []).filter((x) => extraIds.includes(x.id)),
+    [service, extraIds]
+  );
+
   const totals = useMemo(() => {
-    const price = service?.priceMad ?? 0;
+    const base = service?.priceMad ?? 0;
+    const extras = selectedExtras.reduce((n, x) => n + x.priceMad, 0);
+    const price = base + extras;
     const fees = SERVICE_FEE_MAD;
     let discount = 0;
     if (promoApplied) discount = promoApplied.type === 'percent' ? Math.round((price * promoApplied.value) / 100) : promoApplied.value;
     discount = Math.min(discount, price);
-    return { price, fees, discount, total: Math.max(0, price + fees - discount) };
-  }, [service, promoApplied]);
+    return { base, extras, price, fees, discount, total: Math.max(0, price + fees - discount) };
+  }, [service, selectedExtras, promoApplied]);
 
   if (!p) {
     return (
@@ -65,6 +75,8 @@ export default function BookingWizard() {
 
   const canNext =
     step === 0 ? !!service : step === 1 ? (!needsAddress || !!addressId) : step === 2 ? !!date && !!time : true;
+
+  const chosenStaff = staffIdx >= 0 ? p.staff?.[staffIdx] : undefined;
 
   const applyPromo = () => {
     const found = PROMO_CODES.find((c) => c.code === promo.trim().toUpperCase());
@@ -113,6 +125,8 @@ export default function BookingWizard() {
       instructions: instructions || undefined,
       promoCode: promoApplied?.code,
       trackable: service.atHome,
+      extrasLabels: selectedExtras.map((x) => x.name),
+      staffName: chosenStaff?.name,
     };
     addBooking(booking);
     notifySuccess();
@@ -142,7 +156,13 @@ export default function BookingWizard() {
             {p.services.map((s) => {
               const active = svcId === s.id;
               return (
-                <Card key={s.id} onPress={() => setSvcId(s.id)} style={[styles.option, active && styles.optionActive]}>
+                <Card
+                  key={s.id}
+                  onPress={() => {
+                    setSvcId(s.id);
+                    setExtraIds([]);
+                  }}
+                  style={[styles.option, active && styles.optionActive]}>
                   <View style={{ flex: 1 }}>
                     <Text style={type.h3}>{s.name}</Text>
                     <Text style={[type.tiny, { marginTop: 3 }]}>
@@ -155,6 +175,25 @@ export default function BookingWizard() {
                 </Card>
               );
             })}
+
+            {service?.extras && service.extras.length > 0 && (
+              <>
+                <Text style={[type.label, { marginTop: spacing.lg, marginBottom: spacing.sm }]}>Options supplémentaires</Text>
+                {service.extras.map((x) => {
+                  const on = extraIds.includes(x.id);
+                  return (
+                    <Card
+                      key={x.id}
+                      onPress={() => setExtraIds((ids) => (on ? ids.filter((i) => i !== x.id) : [...ids, x.id]))}
+                      style={[styles.option, on && styles.optionActive]}>
+                      <Ionicons name={on ? 'checkbox' : 'square-outline'} size={19} color={on ? colors.violetLight : colors.textFaint} />
+                      <Text style={[type.body, { fontSize: 14.5, flex: 1, marginLeft: spacing.sm }]}>{x.name}</Text>
+                      <Text style={styles.optionPrice}>+ {mad(x.priceMad)}</Text>
+                    </Card>
+                  );
+                })}
+              </>
+            )}
           </View>
         )}
 
@@ -195,6 +234,45 @@ export default function BookingWizard() {
         {step === 2 && <Calendar date={date} time={time} onDate={setDate} onTime={setTime} />}
 
         {step === 3 && (
+          <View style={{ gap: spacing.sm }}>
+            <Text style={[type.label, { marginBottom: spacing.sm }]}>Qui intervient ?</Text>
+            <Card onPress={() => setStaffIdx(-1)} style={[styles.option, staffIdx === -1 && styles.optionActive]}>
+              <View style={styles.autoIcon}>
+                <Ionicons name="flash" size={17} color={colors.violetLight} />
+              </View>
+              <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                <Text style={type.h3}>Meilleur pro disponible</Text>
+                <Text style={[type.tiny, { marginTop: 2 }]}>LYVO assigne le pro le mieux noté proche de vous — recommandé</Text>
+              </View>
+              <Ionicons name={staffIdx === -1 ? 'radio-button-on' : 'radio-button-off'} size={19} color={staffIdx === -1 ? colors.violetLight : colors.textFaint} />
+            </Card>
+            {(p.staff ?? []).map((m, i) => {
+              const active = staffIdx === i;
+              return (
+                <Card key={m.name} onPress={() => setStaffIdx(i)} style={[styles.option, active && styles.optionActive]}>
+                  <Image source={{ uri: m.avatar }} style={styles.staffAvatar} />
+                  <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Text style={type.h3}>{m.name}</Text>
+                      <Ionicons name="shield-checkmark" size={13} color={colors.violetLight} />
+                    </View>
+                    <Text style={[type.tiny, { marginTop: 2 }]}>
+                      ★ {m.rating.toFixed(1)} · {m.missions.toLocaleString('fr-FR')} missions · arrive en ~{m.etaMin} min
+                    </Text>
+                  </View>
+                  <Ionicons name={active ? 'radio-button-on' : 'radio-button-off'} size={19} color={active ? colors.violetLight : colors.textFaint} />
+                </Card>
+              );
+            })}
+            {(p.staff ?? []).length === 0 && (
+              <Text style={[type.small, { marginTop: spacing.sm }]}>
+                {p.name} intervient directement sur cette prestation.
+              </Text>
+            )}
+          </View>
+        )}
+
+        {step === 4 && (
           <View style={{ gap: spacing.lg }}>
             <Input
               label="Instructions (optionnel)"
@@ -225,13 +303,13 @@ export default function BookingWizard() {
           </View>
         )}
 
-        {step === 4 && service && date && time && (
+        {step === 5 && service && date && time && (
           <View style={{ gap: spacing.lg }}>
             {/* résumé */}
             <Card>
               <Text style={[type.label, { marginBottom: spacing.md }]}>Résumé</Text>
-              <SummaryRow icon="sparkles-outline" text={service.name} />
-              <SummaryRow icon="business-outline" text={p.name} />
+              <SummaryRow icon="sparkles-outline" text={service.name + (selectedExtras.length ? ` + ${selectedExtras.length} option${selectedExtras.length > 1 ? 's' : ''}` : '')} />
+              <SummaryRow icon="person-outline" text={chosenStaff ? `${chosenStaff.name} — ${p.name}` : `Meilleur pro disponible — ${p.name}`} />
               <SummaryRow icon="calendar-outline" text={`${shortDate(date)} à ${time}`} />
               <SummaryRow
                 icon="location-outline"
@@ -239,8 +317,11 @@ export default function BookingWizard() {
               />
               {instructions ? <SummaryRow icon="chatbox-outline" text={instructions} /> : null}
               <View style={styles.sep} />
-              <PriceRow label="Prestation" value={mad(totals.price)} />
-              <PriceRow label="Frais de service" value={mad(totals.fees)} />
+              <PriceRow label="Prestation" value={mad(totals.base)} />
+              {selectedExtras.map((x) => (
+                <PriceRow key={x.id} label={x.name} value={mad(x.priceMad)} />
+              ))}
+              <PriceRow label="Frais LYVO" value={mad(totals.fees)} />
               {totals.discount > 0 && <PriceRow label={`Réduction (${promoApplied?.code})`} value={`- ${mad(totals.discount)}`} accent />}
               <View style={styles.sep} />
               <View style={styles.totalRow}>
@@ -342,6 +423,15 @@ const styles = StyleSheet.create({
   stepLabel: { color: colors.textFaint, fontSize: 10, fontWeight: '600' },
   option: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   optionActive: { borderColor: colors.violetLight, backgroundColor: colors.cardHi },
+  autoIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.violetDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  staffAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.cardHi },
   optionPrice: { color: colors.violetLight, fontWeight: '800', fontSize: 14, marginRight: 4 },
   promoOk: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.sm },
   summaryRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
