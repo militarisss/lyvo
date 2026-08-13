@@ -35,6 +35,9 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     padding: spacing.xl,
     paddingTop: spacing.md,
+    width: '100%',
+    maxWidth: 402,
+    alignSelf: 'center',
   },
   handle: {
     alignSelf: 'center',
