@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { colors, gradients, radius, spacing, type } from '@/theme';
 import { Screen } from '@/components/Screen';
+import { FadeInUp, PopIn, Pulse } from '@/components/Animate';
 import { SearchBar } from '@/components/SearchBar';
 import { SectionHeader } from '@/components/SectionHeader';
 import { CategoryTile } from '@/components/CategoryTile';
@@ -46,23 +47,27 @@ export default function Home() {
     <Screen padded={false}>
       <View style={styles.pad}>
         {/* Header */}
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={type.small}>
-              {t('hello')} 👋
-            </Text>
-            <Text style={[type.h1, { marginTop: 2 }]}>{profile.firstName}</Text>
+        <FadeInUp>
+          <View style={styles.header}>
+            <View style={{ flex: 1 }}>
+              <Text style={type.small}>
+                {t('hello')} 👋
+              </Text>
+              <Text style={[type.h1, { marginTop: 2 }]}>{profile.firstName}</Text>
+            </View>
+            <Pressable onPress={() => router.push('/notifications')} style={styles.bell}>
+              <Ionicons name="notifications-outline" size={21} color={colors.text} />
+              {unreadNotifs > 0 && <View style={styles.bellDot} />}
+            </Pressable>
+            <Pressable onPress={() => router.push('/(tabs)/profile')}>
+              <Avatar uri={profile.avatar} name={`${profile.firstName} ${profile.lastName}`} size={44} ring />
+            </Pressable>
           </View>
-          <Pressable onPress={() => router.push('/notifications')} style={styles.bell}>
-            <Ionicons name="notifications-outline" size={21} color={colors.text} />
-            {unreadNotifs > 0 && <View style={styles.bellDot} />}
-          </Pressable>
-          <Pressable onPress={() => router.push('/(tabs)/profile')}>
-            <Avatar uri={profile.avatar} name={`${profile.firstName} ${profile.lastName}`} size={44} ring />
-          </Pressable>
-        </View>
+        </FadeInUp>
 
-        <SearchBar placeholder={t('search_placeholder')} onPress={() => router.push('/(tabs)/explore')} style={{ marginTop: spacing.lg }} />
+        <FadeInUp delay={90}>
+          <SearchBar placeholder={t('search_placeholder')} onPress={() => router.push('/(tabs)/explore')} style={{ marginTop: spacing.lg }} />
+        </FadeInUp>
       </View>
 
       {/* Catégories */}
@@ -70,37 +75,43 @@ export default function Home() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: spacing.lg, gap: spacing.sm, marginTop: spacing.xl }}>
-        {CATEGORIES.map((c) => (
-          <CategoryTile key={c.id} category={c} onPress={() => router.push(`/category/${c.id}`)} />
+        {CATEGORIES.map((c, i) => (
+          <PopIn key={c.id} delay={160 + i * 55}>
+            <CategoryTile category={c} onPress={() => router.push(`/category/${c.id}`)} />
+          </PopIn>
         ))}
       </ScrollView>
 
       {/* Offre du moment */}
       <View style={styles.pad}>
-        <Pressable onPress={() => router.push('/provider/atlas-detailing')}>
-          <LinearGradient colors={gradients.hero} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.offer}>
-            <View style={{ flex: 1 }}>
-              <View style={styles.offerBadge}>
-                <Ionicons name="flash" size={11} color={colors.gold} />
-                <Text style={styles.offerBadgeText}>OFFRE DU MOMENT</Text>
+        <FadeInUp delay={300}>
+          <Pressable onPress={() => router.push('/provider/atlas-detailing')}>
+            <LinearGradient colors={gradients.hero} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.offer}>
+              <View style={{ flex: 1 }}>
+                <View style={styles.offerBadge}>
+                  <Ionicons name="flash" size={11} color={colors.gold} />
+                  <Text style={styles.offerBadgeText}>OFFRE DU MOMENT</Text>
+                </View>
+                <Text style={[type.h2, { marginTop: spacing.md }]}>-20 % sur le detailing auto</Text>
+                <Text style={[type.small, { marginTop: 4 }]}>Atlas Detailing · jusqu’à dimanche</Text>
               </View>
-              <Text style={[type.h2, { marginTop: spacing.md }]}>-20 % sur le detailing auto</Text>
-              <Text style={[type.small, { marginTop: 4 }]}>Atlas Detailing · jusqu’à dimanche</Text>
-            </View>
-            <View style={styles.offerArrow}>
-              <Ionicons name="arrow-forward" size={18} color="#fff" />
-            </View>
-          </LinearGradient>
-        </Pressable>
+              <Pulse>
+                <View style={styles.offerArrow}>
+                  <Ionicons name="arrow-forward" size={18} color="#fff" />
+                </View>
+              </Pulse>
+            </LinearGradient>
+          </Pressable>
+        </FadeInUp>
       </View>
 
       {/* Sections */}
-      <HomeSection title="Près de vous" data={near} loading={!providers} onSeeAll={() => router.push('/(tabs)/explore')} />
-      {recommended.length > 0 && <HomeSection title="Recommandé pour vous" data={recommended} loading={false} />}
-      <HomeSection title="Les mieux notés" data={topRated} loading={!providers} />
-      {rebook.length > 0 && <HomeSection title="Réserver à nouveau" data={rebook} loading={false} />}
-      <HomeSection title="Expériences premium" data={premium} loading={!providers} wide />
-      {fresh.length > 0 && <HomeSection title="Nouveautés" data={fresh} loading={false} />}
+      <HomeSection title="Près de vous" data={near} loading={!providers} onSeeAll={() => router.push('/(tabs)/explore')} delay={0} />
+      {recommended.length > 0 && <HomeSection title="Recommandé pour vous" data={recommended} loading={false} delay={110} />}
+      <HomeSection title="Les mieux notés" data={topRated} loading={!providers} delay={220} />
+      {rebook.length > 0 && <HomeSection title="Réserver à nouveau" data={rebook} loading={false} delay={330} />}
+      <HomeSection title="Expériences premium" data={premium} loading={!providers} wide delay={440} />
+      {fresh.length > 0 && <HomeSection title="Nouveautés" data={fresh} loading={false} delay={550} />}
 
       <View style={{ height: spacing.xl }} />
     </Screen>
@@ -113,25 +124,31 @@ function HomeSection({
   loading,
   onSeeAll,
   wide,
+  delay = 0,
 }: {
   title: string;
   data: Provider[];
   loading: boolean;
   onSeeAll?: () => void;
   wide?: boolean;
+  delay?: number;
 }) {
   if (!loading && data.length === 0) return null;
   return (
-    <View>
+    <FadeInUp delay={delay} distance={26}>
       <View style={styles.pad}>
         <SectionHeader title={title} onSeeAll={onSeeAll} />
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.lg }}>
         {loading
           ? [0, 1, 2].map((i) => <Skeleton key={i} width={220} height={196} style={{ marginRight: spacing.md }} />)
-          : data.map((p) => <ProviderCard key={p.id} provider={p} width={wide ? 280 : 220} />)}
+          : data.map((p, i) => (
+              <FadeInUp key={p.id} delay={delay + 80 + i * 70} distance={0}>
+                <ProviderCard provider={p} width={wide ? 280 : 220} />
+              </FadeInUp>
+            ))}
       </ScrollView>
-    </View>
+    </FadeInUp>
   );
 }
 
